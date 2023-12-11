@@ -5,6 +5,9 @@ import requests
 from pynput.mouse import Listener
 from pynput import keyboard
 import argparse
+import logging
+from logging import handlers
+import time
 
 
 version = 'beta'
@@ -53,9 +56,7 @@ def capture_screen():
     x1, y1 = click_listener.get_coordinates()
     x2, y2 = click_listener.get_coordinates()
 
-    # Print the coordinates
-    # print("First click coordinates:", x1, y1)
-    print(f'Rectangle: x1: {x1} y1: {y1} x2: {x2} y2: {y2}')
+    logging.info(f'Rectangle: x1: {x1} y1: {y1} x2: {x2} y2: {y2}')
     try:
         image = ImageGrab.grab(bbox=(x1, y1, x2, y2))
     except:
@@ -93,26 +94,37 @@ def help_me(host:str, port:int):
 
 
 def main():
+
     print(f'{bcolors.HEADER}I am © aiHub | version: {version} | © devquasar.com{bcolors.ENDC}')
     parser = argparse.ArgumentParser(description='A simple argparse script')
     parser.add_argument('-api', '--llm_api_host', type=str, help='LLM API host', default='http://localhost')
     parser.add_argument('-p', '--port', type=int, help='LLM API port number', default=1234)
+    parser.add_argument('-l', '--log_file', type=str, help='Log file for aiHub', default='aihub.log')
     args = parser.parse_args()
+
+    def log_setup():
+        log_handler = logging.handlers.WatchedFileHandler(args.log_file)
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        formatter.converter = time.gmtime  # if you want UTC time
+        log_handler.setFormatter(formatter)
+        logger = logging.getLogger()
+        logger.addHandler(log_handler)
+        logger.setLevel(logging.DEBUG)
 
     def on_press(key):
         if any([key in COMBO for COMBO in COMBINATIONS]):
             current.add(key)
-            print(current)
+            logging.info(f'key combo pressed: {current}')
             # if any(all(k in current for k in COMBO) for COMBO in COMBINATIONS):
             if any(x in current for x in {keyboard.KeyCode(char='A')}):
-                print('Make a screenshot: define the screen area by click 2 corners of a rectangle')
+                print(f'{bcolors.HEADER}Make a screenshot: define the screen area by click 2 corners of a rectangle{bcolors.ENDC}')
 
                 bot_response = help_me(args.llm_api_host, args.port)
                 print(f'\n{bcolors.OKGREEN}BOT:{bcolors.ENDC}')
                 print(f'{bcolors.OKGREEN}{bot_response}{bcolors.ENDC}')
             # if key == keyboard.Key.shift and any(x in current for x in {keyboard.KeyCode(char='X')}):
             if any(x in current for x in {keyboard.KeyCode(char='X')}):
-                print('Shift + X pressed. Stopping the listener.')
+                logging.info('Shift + X pressed. Stopping the listener.')
                 listener.stop()
 
     def on_release(key):
@@ -122,6 +134,7 @@ def main():
         except:
             pass
 
+    log_setup()
     with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
         listener.join()
 
