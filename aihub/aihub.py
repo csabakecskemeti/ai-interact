@@ -4,6 +4,7 @@ import pyautogui
 import requests
 from pynput.mouse import Listener
 from pynput import keyboard
+import argparse
 
 
 version = 'beta'
@@ -61,8 +62,8 @@ def capture_screen():
         return None
     return image
 
-def send_request(user_input):
-    url = f"http://localhost:1234/v1/chat/completions"
+def send_request(user_input:str, host:str, port:int):
+    url = f"{host}:{port}/v1/chat/completions"
     headers = {"Content-Type": "application/json"}
     data = {
         "messages": [
@@ -78,7 +79,7 @@ def send_request(user_input):
     return response.json()['choices'][0]['message']['content']
 
 
-def help_me():
+def help_me(host:str, port:int):
     image = capture_screen()
     if image != None:
         text = pytesseract.image_to_string(image)
@@ -87,12 +88,16 @@ def help_me():
         prompt = PROMPT_DEFAULT + text
         print(f'\n{bcolors.WARNING}USER:{bcolors.ENDC}')
         print(f'{bcolors.WARNING}{prompt}{bcolors.ENDC}')
-        return send_request(prompt)
+        return send_request(prompt, host, port)
     pass
 
 
 def main():
     print(f'{bcolors.HEADER}I am © aiHub | version: {version} | © devquasar.com{bcolors.ENDC}')
+    parser = argparse.ArgumentParser(description='A simple argparse script')
+    parser.add_argument('-api', '--llm_api_host', type=str, help='LLM API host', default='http://localhost')
+    parser.add_argument('-p', '--port', type=int, help='LLM API port number', default=1234)
+    args = parser.parse_args()
 
     def on_press(key):
         if any([key in COMBO for COMBO in COMBINATIONS]):
@@ -100,9 +105,9 @@ def main():
             print(current)
             # if any(all(k in current for k in COMBO) for COMBO in COMBINATIONS):
             if any(x in current for x in {keyboard.KeyCode(char='A')}):
-                print('Make a screenshot: define the screen area by click 2 corners of a triange')
+                print('Make a screenshot: define the screen area by click 2 corners of a rectangle')
 
-                bot_response = help_me()
+                bot_response = help_me(args.llm_api_host, args.port)
                 print(f'\n{bcolors.OKGREEN}BOT:{bcolors.ENDC}')
                 print(f'{bcolors.OKGREEN}{bot_response}{bcolors.ENDC}')
             # if key == keyboard.Key.shift and any(x in current for x in {keyboard.KeyCode(char='X')}):
