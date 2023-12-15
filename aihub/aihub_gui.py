@@ -54,7 +54,7 @@ class MyApp:
 
         # Disable the stop button
         self.stop_button.config(state=tk.DISABLED)
-A
+
     def read_stdout(self, *args):
         # Read and display the stdout in real-time
         line = self.process.stdout.readline()
