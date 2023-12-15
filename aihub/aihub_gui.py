@@ -52,7 +52,7 @@ class MyApp:
         self.configuration_settings = {
             'api': tk.StringVar(),
             'shortcut': tk.StringVar(),
-            'prompt': tk.StringVar()
+            'prompt_prefix': tk.StringVar()
         }
 
         # Load configuration from file
@@ -81,18 +81,18 @@ class MyApp:
         config_data = {
             'api': self.configuration_settings['api'].get(),
             'shortcut': self.configuration_settings['shortcut'].get(),
-            'prompt': self.configuration_settings['prompt'].get()
+            'prompt_prefix': self.configuration_settings['prompt_prefix'].get()
         }
 
         with open('config.json', 'w') as file:
             json.dump(config_data, file, indent=4)
 
 
-    def save_configuration(self, api, shortcut, prompt, config_window):
+    def save_configuration(self, api, shortcut, prompt_prefix, config_window):
         # Store the configuration settings in variables
         self.configuration_settings['api'].set(api)
         self.configuration_settings['shortcut'].set(shortcut)
-        self.configuration_settings['prompt'].set(prompt)
+        self.configuration_settings['prompt_prefix'].set(prompt_prefix)
 
         # Save configuration to file
         self.save_configuration_to_file()
@@ -113,8 +113,8 @@ class MyApp:
         shortcut_label = tk.Label(config_window, text="Shortcut:")
         shortcut_entry = tk.Entry(config_window, textvariable=self.configuration_settings['shortcut'])
 
-        prompt_label = tk.Label(config_window, text="Default Prompt:")
-        prompt_entry = tk.Entry(config_window, textvariable=self.configuration_settings['prompt'])
+        prompt_label = tk.Label(config_window, text="Prompt prefix:")
+        prompt_entry = tk.Entry(config_window, textvariable=self.configuration_settings['prompt_prefix'])
 
         # Grid layout for labels and entry widgets
         api_label.grid(row=0, column=0, padx=10, pady=5, sticky="e")
@@ -190,12 +190,15 @@ class MyApp:
         # Start the background app in a separate thread
         self.thread = threading.Thread(target=self.run_background_app)
         self.thread.start()
-        print(f'default prompt: {self.configuration_settings["prompt"].get()}')
+
 
     def run_background_app(self):
         try:
             # Replace 'your_background_app.py' with the actual file name of your background app
-            self.process = subprocess.Popen(["python", "-u", "aihub.py", "-gui"], stdout=subprocess.PIPE, text=True, bufsize=1)
+            self.process = subprocess.Popen(["python", "-u", "aihub.py", "-gui",
+                                             '-api', self.configuration_settings['api'].get(),
+                                             '-pp', self.configuration_settings['prompt_prefix'].get()],
+                                            stdout=subprocess.PIPE, text=True, bufsize=1)
 
             # Read and display the stdout in real-time
             for line in iter(self.process.stdout.readline, ""):

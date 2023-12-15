@@ -13,10 +13,8 @@ import multiprocessing
 
 version = '1.0 beta'
 COMBINATIONS = [
-    {keyboard.Key.shift, keyboard.KeyCode(char='a')},
-    {keyboard.Key.shift, keyboard.KeyCode(char='A')},
-    {keyboard.Key.shift, keyboard.KeyCode(char='x')},
-    {keyboard.Key.shift, keyboard.KeyCode(char='X')}
+    {keyboard.Key.shift, keyboard.Key.f1},
+    {keyboard.Key.shift, keyboard.Key.f12}
 ]
 current = set()
 
@@ -98,8 +96,8 @@ def capture_screen():
     return image
 
 
-def send_request(user_input:str, host:str, port:int):
-    url = f"{host}:{port}/v1/chat/completions"
+def send_request(user_input:str, api:str):
+    url = f"{api}/chat/completions"
     headers = {"Content-Type": "application/json"}
     data = {
         "messages": [
@@ -115,21 +113,19 @@ def send_request(user_input:str, host:str, port:int):
     return response.json()['choices'][0]['message']['content']
 
 
-def help_me(host:str, port:int, is_gui=False):
+def help_me(api:str, prompt_prefix:str, is_gui=False):
     global spinner_thread
     image = capture_screen()
     if image != None:
         text = pytesseract.image_to_string(image)
-        # PROMPT_DEFAULT = "Summarize this: \n"
-        PROMPT_DEFAULT = "Help me with this: \n"
-        prompt = PROMPT_DEFAULT + text
+        prompt = f'{prompt_prefix}\n {text}'
         user_printer('USER:', is_gui)
         user_printer(prompt, is_gui)
         bot_printer('BOT:', is_gui)
         if not is_gui:
             spinner_process = multiprocessing.Process(target=spinner)
             spinner_process.start()
-        bot_response = send_request(prompt, host, port)
+        bot_response = send_request(prompt, api)
         if not is_gui:
             spinner_process.terminate()
             spinner_process.join()
@@ -141,13 +137,13 @@ def help_me(host:str, port:int, is_gui=False):
 
 def main():
     parser = argparse.ArgumentParser(description='aiHub arg parse')
-    parser.add_argument('-api', '--llm_api_host', type=str, help='LLM API host', default='http://localhost')
-    parser.add_argument('-p', '--port', type=int, help='LLM API port number', default=1234)
+    parser.add_argument('-api', '--llm_api_host', type=str, help='LLM API host', default='http://localhost:1234/v1')
+    parser.add_argument('-pp', '--prompt_prefix', type=str, help='Prefix for every prompt', default='Help me with this')
     parser.add_argument('-l', '--log_file', type=str, help='Log file for aiHub', default='aihub.log')
     parser.add_argument('-gui', '--gui_printer', action='store_true', help='Using aiHub with aiHubManager GUI')
     args = parser.parse_args()
 
-    system_printer(f'I am © aiHub | version: {version} | © devquasar.com', args.gui_printer)
+    system_printer(f'I am aiHub | version: {version} | devquasar.com', args.gui_printer)
 
     def log_setup():
         log_handler = logging.handlers.WatchedFileHandler(args.log_file)
@@ -163,14 +159,15 @@ def main():
             current.add(key)
             logging.info(f'key combo pressed: {current}')
             # if any(all(k in current for k in COMBO) for COMBO in COMBINATIONS):
-            if any(x in current for x in {keyboard.KeyCode(char='A')}):
-                system_printer(f'Make a screenshot: define the screen area by click 2 corners of a rectangle', args.gui_printer)
+            # if any(x in current for x in {keyboard.KeyCode(char='A')}):
+            if any(keypressed in current for keypressed in {keyboard.Key.f1}):
+                system_printer(f'Shift + F1 pressed.\nMake a screenshot: define the screen area by click 2 corners of a rectangle', args.gui_printer)
 
-                bot_response = help_me(args.llm_api_host, args.port, args.gui_printer)
+                bot_response = help_me(args.llm_api_host, args.prompt_prefix, args.gui_printer)
                 bot_printer(bot_response, args.gui_printer)
             # if key == keyboard.Key.shift and any(x in current for x in {keyboard.KeyCode(char='X')}):
-            if any(x in current for x in {keyboard.KeyCode(char='X')}):
-                logging.info('Shift + X pressed. Stopping the listener.')
+            if any(keypressed in current for keypressed in {keyboard.Key.f12}):
+                logging.info('Shift + F12 pressed. Stopping the listener.')
                 listener.stop()
 
     def on_release(key):

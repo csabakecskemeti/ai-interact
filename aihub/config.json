@@ -1,5 +1,5 @@
 {
-    "api": "default_api_value",
-    "shortcut": "default_shortcut_value",
-    "prompt": "test"
+    "api": "http://localhost:1234/v1",
+    "shortcut": "F1",
+    "prompt_prefix": "Summarize this:"
 }
