@@ -1,6 +1,6 @@
 from PIL import Image, ImageGrab
 import pytesseract
-import pyautogui
+import sys
 import requests
 from pynput.mouse import Listener
 from pynput import keyboard
@@ -8,6 +8,7 @@ import argparse
 import logging
 from logging import handlers
 import time
+import threading
 
 
 version = '1.0 beta'
@@ -36,11 +37,13 @@ class ClickListener:
         self.coordinates = None
         self.keep_listening = True
 
+
     def on_click(self, x, y, button, pressed):
         if pressed:
             self.coordinates = int(x), int(y)
             self.keep_listening = False
             return False  # Stop the listener
+
 
     def get_coordinates(self):
         with Listener(on_click=self.on_click) as listener:
@@ -54,17 +57,30 @@ def system_printer(text, is_gui=False):
     else:
         print(f'\n{bcolors.HEADER}{text}{bcolors.ENDC}')
 
+
 def user_printer(text, is_gui=False):
     if is_gui:
         print(f'\n{text}')
     else:
         print(f'\n{bcolors.WARNING}{text}{bcolors.ENDC}')
 
+
 def bot_printer(text, is_gui=False):
     if is_gui:
         print(f'\n{text}')
     else:
         print(f'\n{bcolors.OKGREEN}{text}{bcolors.ENDC}')
+
+
+def spinner():
+    symbols = ['-', '\\', '|', '/']
+    i = 0
+    while True:
+        sys.stdout.write('\r' + symbols[i])
+        sys.stdout.flush()
+        time.sleep(0.1)
+        i = (i + 1) % len(symbols)
+
 
 def capture_screen():
     # Create an instance of ClickListener
@@ -80,6 +96,7 @@ def capture_screen():
     except:
         return None
     return image
+
 
 def send_request(user_input:str, host:str, port:int):
     url = f"{host}:{port}/v1/chat/completions"
@@ -99,6 +116,7 @@ def send_request(user_input:str, host:str, port:int):
 
 
 def help_me(host:str, port:int, is_gui=False):
+    global spinner_thread
     image = capture_screen()
     if image != None:
         text = pytesseract.image_to_string(image)
@@ -107,7 +125,21 @@ def help_me(host:str, port:int, is_gui=False):
         prompt = PROMPT_DEFAULT + text
         user_printer('USER:', is_gui)
         user_printer(prompt, is_gui)
-        return send_request(prompt, host, port)
+        bot_printer('BOT:', is_gui)
+        bot_response = ''
+        bot_response = send_request(prompt, host, port)
+        # try:
+        #     bot_printer('BOT:', is_gui)
+        #     spinner_thread = threading.Thread(target=spinner)
+        #     spinner_thread.start()
+        #
+        #     bot_response = send_request(prompt, host, port)
+        #
+        # finally:
+        #     # Stop the spinner when the task is done
+        #     spinner_thread.join()
+
+        return bot_response
     pass
 
 
@@ -139,7 +171,6 @@ def main():
                 system_printer(f'Make a screenshot: define the screen area by click 2 corners of a rectangle', args.gui_printer)
 
                 bot_response = help_me(args.llm_api_host, args.port, args.gui_printer)
-                bot_printer('BOT:', args.gui_printer)
                 bot_printer(bot_response, args.gui_printer)
             # if key == keyboard.Key.shift and any(x in current for x in {keyboard.KeyCode(char='X')}):
             if any(x in current for x in {keyboard.KeyCode(char='X')}):
