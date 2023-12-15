@@ -40,6 +40,12 @@ class MyApp:
         # Add the "Configuration" menu item
         file_menu.add_command(label="Configuration", command=self.open_configuration_window)
 
+        # Add a separator
+        file_menu.add_separator()
+
+        # Add the "About" menu item
+        file_menu.add_command(label="About", command=self.show_about)
+
         # ... (unchanged code)
 
         # Variable to store configuration settings
@@ -125,6 +131,24 @@ class MyApp:
                                 command=lambda: self.save_configuration(api_entry.get(), shortcut_entry.get(),
                                                                         prompt_entry.get(), config_window))
         save_button.grid(row=3, column=0, columnspan=2, pady=10)
+
+    def show_about(self):
+        about_window = tk.Toplevel(self.root)
+        about_window.title("About")
+
+        # Read content from the readme.md file
+        try:
+            with open('readme.md', 'r', encoding='utf-8') as file:
+                readme_content = file.read()
+
+            # Create a scrolled text widget to display the content
+            readme_text = scrolledtext.ScrolledText(about_window, wrap=tk.WORD, width=60, height=20)
+            readme_text.insert(tk.END, readme_content)
+            readme_text.config(state=tk.DISABLED)
+            readme_text.pack(expand=True, fill='both')
+        except FileNotFoundError:
+            readme_text = tk.Label(about_window, text="readme.md not found.")
+            readme_text.pack()
 
     def change_color(color):
         root.configure(bg=color)
