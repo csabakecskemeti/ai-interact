@@ -1,8 +1,8 @@
-import time
 import tkinter as tk
 from tkinter import scrolledtext
 import subprocess
 import threading
+import json
 
 class MyApp:
     def __init__(self, root):
@@ -25,6 +25,33 @@ class MyApp:
         self.stop_button = tk.Button(root, text="Stop aiHub", command=self.stop_background_app, state=tk.DISABLED)
         self.stop_button.grid(row=2, column=0, pady=10)
 
+        # Create the menu bar
+        self.menu_bar = tk.Menu(root)
+        root.config(menu=self.menu_bar)
+
+        # Create the menu bar
+        self.menu_bar = tk.Menu(root)
+        root.config(menu=self.menu_bar)
+
+        # Create the File menu
+        file_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.menu_bar.add_cascade(label="File", menu=file_menu)
+
+        # Add the "Configuration" menu item
+        file_menu.add_command(label="Configuration", command=self.open_configuration_window)
+
+        # ... (unchanged code)
+
+        # Variable to store configuration settings
+        self.configuration_settings = {
+            'api': tk.StringVar(),
+            'shortcut': tk.StringVar(),
+            'prompt': tk.StringVar()
+        }
+
+        # Load configuration from file
+        self.load_configuration_from_file()
+
         # Allow resizing of the window
         root.geometry("400x300")
         self.default_color = "lightgray"
@@ -33,6 +60,71 @@ class MyApp:
         self.stop_spinner_flag = False
         # self.spinner_line_number = None
 
+    def load_configuration_from_file(self):
+        try:
+            with open('config.json', 'r') as file:
+                config_data = json.load(file)
+
+                # Update StringVar values
+                for key, value in config_data.items():
+                    self.configuration_settings[key].set(value)
+        except FileNotFoundError:
+            print("Config file not found. Using default values.")
+
+    def save_configuration_to_file(self):
+        config_data = {
+            'api': self.configuration_settings['api'].get(),
+            'shortcut': self.configuration_settings['shortcut'].get(),
+            'prompt': self.configuration_settings['prompt'].get()
+        }
+
+        with open('config.json', 'w') as file:
+            json.dump(config_data, file, indent=4)
+
+
+    def save_configuration(self, api, shortcut, prompt, config_window):
+        # Store the configuration settings in variables
+        self.configuration_settings['api'].set(api)
+        self.configuration_settings['shortcut'].set(shortcut)
+        self.configuration_settings['prompt'].set(prompt)
+
+        # Save configuration to file
+        self.save_configuration_to_file()
+
+        # Close the configuration window
+        config_window.destroy()
+
+
+    def open_configuration_window(self):
+        # Create a new Toplevel window for configuration settings
+        config_window = tk.Toplevel(self.root)
+        config_window.title("Configuration Settings")
+
+        # Labels and entry widgets for configuration settings
+        api_label = tk.Label(config_window, text="API:")
+        api_entry = tk.Entry(config_window, textvariable=self.configuration_settings['api'])
+
+        shortcut_label = tk.Label(config_window, text="Shortcut:")
+        shortcut_entry = tk.Entry(config_window, textvariable=self.configuration_settings['shortcut'])
+
+        prompt_label = tk.Label(config_window, text="Default Prompt:")
+        prompt_entry = tk.Entry(config_window, textvariable=self.configuration_settings['prompt'])
+
+        # Grid layout for labels and entry widgets
+        api_label.grid(row=0, column=0, padx=10, pady=5, sticky="e")
+        api_entry.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+
+        shortcut_label.grid(row=1, column=0, padx=10, pady=5, sticky="e")
+        shortcut_entry.grid(row=1, column=1, padx=10, pady=5, sticky="w")
+
+        prompt_label.grid(row=2, column=0, padx=10, pady=5, sticky="e")
+        prompt_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
+
+        # Button to save configuration settings and close the window
+        save_button = tk.Button(config_window, text="Save",
+                                command=lambda: self.save_configuration(api_entry.get(), shortcut_entry.get(),
+                                                                        prompt_entry.get(), config_window))
+        save_button.grid(row=3, column=0, columnspan=2, pady=10)
 
     def change_color(color):
         root.configure(bg=color)
@@ -74,6 +166,7 @@ class MyApp:
         # Start the background app in a separate thread
         self.thread = threading.Thread(target=self.run_background_app)
         self.thread.start()
+        print(f'default prompt: {self.configuration_settings["prompt"].get()}')
 
     def run_background_app(self):
         try:
