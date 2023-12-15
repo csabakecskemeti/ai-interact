@@ -8,7 +8,7 @@ import argparse
 import logging
 from logging import handlers
 import time
-import threading
+import multiprocessing
 
 
 version = '1.0 beta'
@@ -126,18 +126,14 @@ def help_me(host:str, port:int, is_gui=False):
         user_printer('USER:', is_gui)
         user_printer(prompt, is_gui)
         bot_printer('BOT:', is_gui)
-        bot_response = ''
+        if not is_gui:
+            spinner_process = multiprocessing.Process(target=spinner)
+            spinner_process.start()
         bot_response = send_request(prompt, host, port)
-        # try:
-        #     bot_printer('BOT:', is_gui)
-        #     spinner_thread = threading.Thread(target=spinner)
-        #     spinner_thread.start()
-        #
-        #     bot_response = send_request(prompt, host, port)
-        #
-        # finally:
-        #     # Stop the spinner when the task is done
-        #     spinner_thread.join()
+        if not is_gui:
+            spinner_process.terminate()
+            spinner_process.join()
+
 
         return bot_response
     pass

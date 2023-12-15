@@ -1,3 +1,4 @@
+import time
 import tkinter as tk
 from tkinter import scrolledtext
 import subprocess
@@ -26,7 +27,42 @@ class MyApp:
 
         # Allow resizing of the window
         root.geometry("400x300")
+        self.default_color = "lightgray"
+        self.load_color = '#856ff8'
         root.resizable(True, True)
+        self.stop_spinner_flag = False
+        # self.spinner_line_number = None
+
+
+    def change_color(color):
+        root.configure(bg=color)
+
+    # def run_spinner(self):
+    #     symbols = ['-', '\\', '|', '/']
+    #     i = 0
+    #
+    #     while not self.stop_spinner_flag:
+    #         spinner_text = '\r' + symbols[i]
+    #         if self.spinner_line_number is not None:
+    #             # Update the existing line
+    #             self.update_spinner_text_area(spinner_text, line_number=self.spinner_line_number)
+    #         else:
+    #             # Insert a new line
+    #             self.update_spinner_text_area(spinner_text)
+    #             self.spinner_line_number = self.text_area.index(tk.END).split('.')[0]
+    #
+    #         time.sleep(0.1)
+    #         i = (i + 1) % len(symbols)
+    #
+    #
+    # def start_spinner(self):
+    #     # Start the spinner in a separate thread
+    #     self.thread = threading.Thread(target=self.run_spinner)
+    #     self.thread.start()
+    #
+    # def stop_spinner(self):
+    #     # Set the flag to stop the spinner
+    #     self.stop_spinner_flag = True
 
     def start_background_app(self):
         # Disable the start button while the app is running
@@ -46,7 +82,15 @@ class MyApp:
 
             # Read and display the stdout in real-time
             for line in iter(self.process.stdout.readline, ""):
-                self.update_text_area(line)
+                if len(line) > 0:
+                    self.update_text_area(line)
+                    if "BOT:" in line:
+                        # self.start_spinner()
+                        # self.update_text_area(root.cget("bg"))
+                        root.configure(bg=self.load_color)
+                    else:
+                        # self.stop_spinner()
+                        root.configure(bg='systemWindowBackgroundColor')
 
             # Wait for the process to complete and get the return code
             return_code = self.process.wait()
@@ -77,6 +121,17 @@ class MyApp:
     def update_text_area(self, text):
         # Update the text area in a thread-safe manner
         self.text_area.insert(tk.END, text)
+        self.text_area.yview(tk.END)
+
+        # Force the GUI to update in real-time
+        self.root.update_idletasks()
+
+
+    def update_spinner_text_area(self, text, line_number=None):
+        # Update the text area in a thread-safe manner
+        if line_number is not None:
+            self.text_area.delete(f"{line_number}.0", f"{line_number + 1}.0")
+        self.text_area.insert(tk.END, text + "\n")
         self.text_area.yview(tk.END)
 
         # Force the GUI to update in real-time
