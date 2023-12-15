@@ -27,6 +27,8 @@ class MyApp:
     def start_background_app(self):
         # Disable the button while the app is running
         self.start_button.config(state=tk.DISABLED)
+        # Enable the stop button
+        self.stop_button.config(state=tk.NORMAL)
 
         # Start the background app
         self.process = subprocess.Popen(
@@ -63,6 +65,8 @@ class MyApp:
         else:
             # The process has finished, enable the button
             self.start_button.config(state=tk.NORMAL)
+            # Disable the stop button
+            self.stop_button.config(state=tk.DISABLED)
 
     def update_text_area(self, text):
         # Update the text area in a thread-safe manner
