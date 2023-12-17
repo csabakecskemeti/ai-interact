@@ -10,23 +10,39 @@ class MyApp:
         self.root.title("aiHub Manager")
 
         # Create a grid with a single row and column
-        root.grid_rowconfigure(0, weight=1)
+        root.grid_rowconfigure(1, weight=1)
         root.grid_columnconfigure(0, weight=1)
+
+        # Header label for the chat
+        self.header_label = tk.Label(root, text="Chat", font=("Helvetica", 16, "bold"))
+        self.header_label.grid(row=0, column=0, columnspan=4, sticky="n", pady=10)
 
         # Text area to display stdout
         self.text_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=40, height=10)
-        self.text_area.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=10, pady=10)
+        self.text_area.grid(row=1, column=0, columnspan=4, sticky="nsew", padx=10, pady=10)
+
+        # Header label for the chat
+        self.header_label = tk.Label(root, text="Message", font=("Helvetica", 16, "bold"))
+        self.header_label.grid(row=2, column=0, columnspan=4, sticky="n", pady=10)
+
+        # Entry for input text
+        self.input_entry = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=40, height=4)
+        self.input_entry.grid(row=3, column=0, columnspan=4, padx=10, pady=10, sticky="ew")
+
+        # Button to send the message
+        self.send_button = tk.Button(root, text="Send", command=self.send_message)
+        self.send_button.grid(row=4, column=3, pady=10)
 
         self.start_stop_button = tk.Button(root, text="Start aiHub lurking...", command=self.toggle_background_app)
-        self.start_stop_button.grid(row=1, column=0, pady=10)
+        self.start_stop_button.grid(row=4, column=0, pady=10)
 
         # Button to clear the text area
         self.clear_button = tk.Button(root, text="Clear Text", command=self.clear_text_area)
-        self.clear_button.grid(row=1, column=1, pady=10)
+        self.clear_button.grid(row=4, column=1, pady=10)
 
         # Canvas for the status "light"
         self.status_light_canvas = tk.Canvas(root, width=15, height=15, highlightthickness=0)
-        self.status_light_canvas.grid(row=1, column=2, pady=10, padx=10)
+        self.status_light_canvas.grid(row=4, column=4, pady=10, padx=10)
 
         # Initialize the circle on the canvas
         self.status_light_circle = self.status_light_canvas.create_oval(1, 1, 15, 15, fill="red", outline="")
@@ -66,14 +82,20 @@ class MyApp:
 
         # Allow resizing of the window
         root.geometry("400x300")
-        self.default_color = "lightgray"
-        self.load_color = '#856ff8'
         root.resizable(True, True)
-        self.stop_spinner_flag = False
-        # self.spinner_line_number = None
 
         # Flag to track whether the background app is currently running
         self.background_app_running = False
+
+    def send_message(self):
+        # Get text from the input entry
+        input_text = self.input_entry.get("1.0", tk.END)
+
+        # Append the text to the text area
+        self.text_area.insert(tk.END, f"\nUser: {input_text}")
+
+        # Clear the input entry
+        self.input_entry.delete("1.0", tk.END)
 
 
     def toggle_background_app(self):
