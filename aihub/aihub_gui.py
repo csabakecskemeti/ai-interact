@@ -15,15 +15,21 @@ class MyApp:
 
         # Text area to display stdout
         self.text_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=40, height=10)
-        self.text_area.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        self.text_area.grid(row=0, column=0, columnspan=3, sticky="nsew", padx=10, pady=10)
 
-        # Button to start the background app
-        self.start_button = tk.Button(root, text="Start aiHub lurking...", command=self.start_background_app)
-        self.start_button.grid(row=1, column=0, pady=10)
+        self.start_stop_button = tk.Button(root, text="Start aiHub lurking...", command=self.toggle_background_app)
+        self.start_stop_button.grid(row=1, column=0, pady=10)
 
-        # Button to stop the background app
-        self.stop_button = tk.Button(root, text="Stop aiHub", command=self.stop_background_app, state=tk.DISABLED)
-        self.stop_button.grid(row=2, column=0, pady=10)
+        # Button to clear the text area
+        self.clear_button = tk.Button(root, text="Clear Text", command=self.clear_text_area)
+        self.clear_button.grid(row=1, column=1, pady=10)
+
+        # Canvas for the status "light"
+        self.status_light_canvas = tk.Canvas(root, width=15, height=15, highlightthickness=0)
+        self.status_light_canvas.grid(row=1, column=2, pady=10, padx=10)
+
+        # Initialize the circle on the canvas
+        self.status_light_circle = self.status_light_canvas.create_oval(1, 1, 15, 15, fill="red", outline="")
 
         # Create the menu bar
         self.menu_bar = tk.Menu(root)
@@ -66,6 +72,19 @@ class MyApp:
         self.stop_spinner_flag = False
         # self.spinner_line_number = None
 
+        # Flag to track whether the background app is currently running
+        self.background_app_running = False
+
+
+    def toggle_background_app(self):
+        if hasattr(self, 'process') and self.process.poll() is None:
+            # Background app is running, stop it
+            self.stop_background_app()
+        else:
+            # Background app is not running, start it
+            self.start_background_app()
+
+
     def load_configuration_from_file(self):
         try:
             with open('config.json', 'r') as file:
@@ -80,7 +99,7 @@ class MyApp:
     def save_configuration_to_file(self):
         config_data = {
             'api': self.configuration_settings['api'].get(),
-            'shortcut': self.configuration_settings['shortcut'].get(),
+            # 'shortcut': self.configuration_settings['shortcut'].get(),
             'prompt_prefix': self.configuration_settings['prompt_prefix'].get()
         }
 
@@ -88,10 +107,10 @@ class MyApp:
             json.dump(config_data, file, indent=4)
 
 
-    def save_configuration(self, api, shortcut, prompt_prefix, config_window):
+    def save_configuration(self, api, prompt_prefix, config_window):
         # Store the configuration settings in variables
         self.configuration_settings['api'].set(api)
-        self.configuration_settings['shortcut'].set(shortcut)
+        # self.configuration_settings['shortcut'].set(shortcut)
         self.configuration_settings['prompt_prefix'].set(prompt_prefix)
 
         # Save configuration to file
@@ -110,8 +129,8 @@ class MyApp:
         api_label = tk.Label(config_window, text="API:")
         api_entry = tk.Entry(config_window, textvariable=self.configuration_settings['api'])
 
-        shortcut_label = tk.Label(config_window, text="Shortcut:")
-        shortcut_entry = tk.Entry(config_window, textvariable=self.configuration_settings['shortcut'])
+        # shortcut_label = tk.Label(config_window, text="Shortcut:")
+        # shortcut_entry = tk.Entry(config_window, textvariable=self.configuration_settings['shortcut'])
 
         prompt_label = tk.Label(config_window, text="Prompt prefix:")
         prompt_entry = tk.Entry(config_window, textvariable=self.configuration_settings['prompt_prefix'])
@@ -120,17 +139,20 @@ class MyApp:
         api_label.grid(row=0, column=0, padx=10, pady=5, sticky="e")
         api_entry.grid(row=0, column=1, padx=10, pady=5, sticky="w")
 
-        shortcut_label.grid(row=1, column=0, padx=10, pady=5, sticky="e")
-        shortcut_entry.grid(row=1, column=1, padx=10, pady=5, sticky="w")
+        # shortcut_label.grid(row=1, column=0, padx=10, pady=5, sticky="e")
+        # shortcut_entry.grid(row=1, column=1, padx=10, pady=5, sticky="w")
 
-        prompt_label.grid(row=2, column=0, padx=10, pady=5, sticky="e")
-        prompt_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
+        prompt_label.grid(row=1, column=0, padx=10, pady=5, sticky="e")
+        prompt_entry.grid(row=1, column=1, padx=10, pady=5, sticky="w")
 
         # Button to save configuration settings and close the window
+        # save_button = tk.Button(config_window, text="Save",
+        #                         command=lambda: self.save_configuration(api_entry.get(), shortcut_entry.get(),
+        #                                                                 prompt_entry.get(), config_window))
         save_button = tk.Button(config_window, text="Save",
-                                command=lambda: self.save_configuration(api_entry.get(), shortcut_entry.get(),
+                                command=lambda: self.save_configuration(api_entry.get(),
                                                                         prompt_entry.get(), config_window))
-        save_button.grid(row=3, column=0, columnspan=2, pady=10)
+        save_button.grid(row=2, column=0, columnspan=2, pady=10)
 
     def show_about(self):
         about_window = tk.Toplevel(self.root)
@@ -150,47 +172,35 @@ class MyApp:
             readme_text = tk.Label(about_window, text="readme.md not found.")
             readme_text.pack()
 
-    def change_color(color):
-        root.configure(bg=color)
 
-    # def run_spinner(self):
-    #     symbols = ['-', '\\', '|', '/']
-    #     i = 0
-    #
-    #     while not self.stop_spinner_flag:
-    #         spinner_text = '\r' + symbols[i]
-    #         if self.spinner_line_number is not None:
-    #             # Update the existing line
-    #             self.update_spinner_text_area(spinner_text, line_number=self.spinner_line_number)
-    #         else:
-    #             # Insert a new line
-    #             self.update_spinner_text_area(spinner_text)
-    #             self.spinner_line_number = self.text_area.index(tk.END).split('.')[0]
-    #
-    #         time.sleep(0.1)
-    #         i = (i + 1) % len(symbols)
-    #
-    #
-    # def start_spinner(self):
-    #     # Start the spinner in a separate thread
-    #     self.thread = threading.Thread(target=self.run_spinner)
-    #     self.thread.start()
-    #
-    # def stop_spinner(self):
-    #     # Set the flag to stop the spinner
-    #     self.stop_spinner_flag = True
+    def stop_background_app(self):
+        # Terminate the background app
+        if hasattr(self, 'process') and self.process.poll() is None:
+            self.process.terminate()
+
+        # Enable the start/stop button
+        self.start_stop_button.config(text="Start aiHub lurking...", command=self.start_background_app)
+        # Update the flag
+        self.background_app_running = False
+
+        # Update the status "light" color
+        self.status_light_canvas.itemconfig(self.status_light_circle, fill="red", outline="")
 
     def start_background_app(self):
-        # Disable the start button while the app is running
-        self.start_button.config(state=tk.DISABLED)
+        if not self.background_app_running:
 
-        # Enable the stop button
-        self.stop_button.config(state=tk.NORMAL)
+            # Start the background app in a separate thread
+            self.thread = threading.Thread(target=self.run_background_app)
+            self.thread.start()
 
-        # Start the background app in a separate thread
-        self.thread = threading.Thread(target=self.run_background_app)
-        self.thread.start()
+            # Update the command attribute for the button
+            self.start_stop_button.config(text="Stop aiHub", command=self.stop_background_app)
 
+            # Update the flag
+            self.background_app_running = True
+
+            # Update the status "light" color
+            self.status_light_canvas.itemconfig(self.status_light_circle, fill="green", outline="")
 
     def run_background_app(self):
         try:
@@ -205,21 +215,18 @@ class MyApp:
                 if len(line) > 0:
                     self.update_text_area(line)
                     if "BOT:" in line:
-                        # self.start_spinner()
-                        # self.update_text_area(root.cget("bg"))
-                        root.configure(bg=self.load_color)
+                        self.status_light_canvas.itemconfig(self.status_light_circle, fill="orange", outline="")
                     else:
-                        # self.stop_spinner()
-                        root.configure(bg='systemWindowBackgroundColor')
+                        self.status_light_canvas.itemconfig(self.status_light_circle, fill="green", outline="")
 
             # Wait for the process to complete and get the return code
             return_code = self.process.wait()
 
-            # Enable the start button after the app is done
-            self.start_button.config(state=tk.NORMAL)
-
-            # Disable the stop button
-            self.stop_button.config(state=tk.DISABLED)
+            # # Enable the start button after the app is done
+            # self.start_button.config(state=tk.NORMAL)
+            #
+            # # Disable the stop button
+            # self.stop_button.config(state=tk.DISABLED)
 
             # Optionally, you can print the return code
             print("Background App exited with return code:", return_code)
@@ -227,16 +234,13 @@ class MyApp:
         except Exception as e:
             print("Error:", e)
 
-    def stop_background_app(self):
-        # Terminate the background app
-        if hasattr(self, 'process') and self.process.poll() is None:
-            self.process.terminate()
 
-        # Enable the start button
-        self.start_button.config(state=tk.NORMAL)
+    def clear_text_area(self):
+        # Keep the first two lines and clear the rest
+        text_content = self.text_area.get("1.0", "2.0")
+        self.text_area.delete("3.0", tk.END)
+        self.text_area.insert(tk.END, text_content)
 
-        # Disable the stop button
-        self.stop_button.config(state=tk.DISABLED)
 
     def update_text_area(self, text):
         # Update the text area in a thread-safe manner
