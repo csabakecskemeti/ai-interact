@@ -11,36 +11,37 @@ import time
 import multiprocessing
 
 
-version = "1.0 beta"
+version = '1.0 beta'
 COMBINATIONS = [
     {keyboard.Key.shift, keyboard.Key.f1},
-    {keyboard.Key.shift, keyboard.Key.f12},
+    {keyboard.Key.shift, keyboard.Key.f12}
 ]
 current = set()
 
 
 class bcolors:
-    HEADER = "\033[95m"
-    OKBLUE = "\033[94m"
-    OKCYAN = "\033[96m"
-    OKGREEN = "\033[92m"
-    WARNING = "\033[93m"
-    FAIL = "\033[91m"
-    ENDC = "\033[0m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
-
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 class ClickListener:
     def __init__(self):
         self.coordinates = None
         self.keep_listening = True
 
+
     def on_click(self, x, y, button, pressed):
         if pressed:
             self.coordinates = int(x), int(y)
             self.keep_listening = False
             return False  # Stop the listener
+
 
     def get_coordinates(self):
         with Listener(on_click=self.on_click) as listener:
@@ -50,30 +51,30 @@ class ClickListener:
 
 def system_printer(text, is_gui=False):
     if is_gui:
-        print(f"\n{text}")
+        print(f'\n{text}')
     else:
-        print(f"\n{bcolors.HEADER}{text}{bcolors.ENDC}")
+        print(f'\n{bcolors.HEADER}{text}{bcolors.ENDC}')
 
 
 def user_printer(text, is_gui=False):
     if is_gui:
-        print(f"\n{text}")
+        print(f'\n{text}')
     else:
-        print(f"\n{bcolors.WARNING}{text}{bcolors.ENDC}")
+        print(f'\n{bcolors.WARNING}{text}{bcolors.ENDC}')
 
 
 def bot_printer(text, is_gui=False):
     if is_gui:
-        print(f"\n{text}")
+        print(f'\n{text}')
     else:
-        print(f"\n{bcolors.OKGREEN}{text}{bcolors.ENDC}")
+        print(f'\n{bcolors.OKGREEN}{text}{bcolors.ENDC}')
 
 
 def spinner():
-    symbols = ["-", "\\", "|", "/"]
+    symbols = ['-', '\\', '|', '/']
     i = 0
     while True:
-        sys.stdout.write("\r" + symbols[i])
+        sys.stdout.write('\r' + symbols[i])
         sys.stdout.flush()
         time.sleep(0.1)
         i = (i + 1) % len(symbols)
@@ -87,7 +88,7 @@ def capture_screen():
     x1, y1 = click_listener.get_coordinates()
     x2, y2 = click_listener.get_coordinates()
 
-    logging.info(f"Rectangle: x1: {x1} y1: {y1} x2: {x2} y2: {y2}")
+    logging.info(f'Rectangle: x1: {x1} y1: {y1} x2: {x2} y2: {y2}')
     try:
         image = ImageGrab.grab(bbox=(x1, y1, x2, y2))
     except:
@@ -95,7 +96,7 @@ def capture_screen():
     return image
 
 
-def send_request(user_input: str, api: str):
+def send_request(user_input:str, api:str):
     url = f"{api}/chat/completions"
     headers = {"Content-Type": "application/json"}
     data = {
@@ -105,22 +106,22 @@ def send_request(user_input: str, api: str):
         "stop": ["### Instruction:"],
         "temperature": 0.7,
         "max_tokens": -1,
-        "stream": False,
+        "stream": False
     }
     response = requests.post(url, headers=headers, json=data)
     response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"]
+    return response.json()['choices'][0]['message']['content']
 
 
-def help_me(api: str, prompt_prefix: str, is_gui=False):
+def help_me(api:str, prompt_prefix:str, is_gui=False):
     global spinner_thread
     image = capture_screen()
     if image != None:
         text = pytesseract.image_to_string(image)
-        prompt = f"{prompt_prefix}\n {text}"
-        user_printer("USER:", is_gui)
+        prompt = f'{prompt_prefix}\n {text}'
+        user_printer('USER:', is_gui)
         user_printer(prompt, is_gui)
-        bot_printer("BOT:", is_gui)
+        bot_printer('BOT:', is_gui)
         if not is_gui:
             spinner_process = multiprocessing.Process(target=spinner)
             spinner_process.start()
@@ -129,42 +130,24 @@ def help_me(api: str, prompt_prefix: str, is_gui=False):
             spinner_process.terminate()
             spinner_process.join()
 
+
         return bot_response
     pass
 
 
 def main():
-    parser = argparse.ArgumentParser(description="aiHub arg parse")
-    parser.add_argument(
-        "-api",
-        "--llm_api_host",
-        type=str,
-        help="LLM API host",
-        default="http://localhost:1234/v1",
-    )
-    parser.add_argument(
-        "-pp",
-        "--prompt_prefix",
-        type=str,
-        help="Prefix for every prompt",
-        default="Help me with this",
-    )
-    parser.add_argument(
-        "-l", "--log_file", type=str, help="Log file for aiHub", default="aihub.log"
-    )
-    parser.add_argument(
-        "-gui",
-        "--gui_printer",
-        action="store_true",
-        help="Using aiHub with aiHubManager GUI",
-    )
+    parser = argparse.ArgumentParser(description='aiHub arg parse')
+    parser.add_argument('-api', '--llm_api_host', type=str, help='LLM API host', default='http://localhost:1234/v1')
+    parser.add_argument('-pp', '--prompt_prefix', type=str, help='Prefix for every prompt', default='Help me with this')
+    parser.add_argument('-l', '--log_file', type=str, help='Log file for aiHub', default='aihub.log')
+    parser.add_argument('-gui', '--gui_printer', action='store_true', help='Using aiHub with aiHubManager GUI')
     args = parser.parse_args()
 
-    system_printer(f"I am aiHub | version: {version} | devquasar.com", args.gui_printer)
+    system_printer(f'I am aiHub | version: {version} | devquasar.com', args.gui_printer)
 
     def log_setup():
         log_handler = logging.handlers.WatchedFileHandler(args.log_file)
-        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         formatter.converter = time.gmtime  # if you want UTC time
         log_handler.setFormatter(formatter)
         logger = logging.getLogger()
@@ -174,22 +157,17 @@ def main():
     def on_press(key):
         if any([key in COMBO for COMBO in COMBINATIONS]):
             current.add(key)
-            logging.info(f"key combo pressed: {current}")
+            logging.info(f'key combo pressed: {current}')
             # if any(all(k in current for k in COMBO) for COMBO in COMBINATIONS):
             # if any(x in current for x in {keyboard.KeyCode(char='A')}):
             if any(keypressed in current for keypressed in {keyboard.Key.f1}):
-                system_printer(
-                    f"Shift + F1 pressed.\nMake a screenshot: define the screen area by click 2 corners of a rectangle",
-                    args.gui_printer,
-                )
+                system_printer(f'Shift + F1 pressed.\nMake a screenshot: define the screen area by click 2 corners of a rectangle', args.gui_printer)
 
-                bot_response = help_me(
-                    args.llm_api_host, args.prompt_prefix, args.gui_printer
-                )
+                bot_response = help_me(args.llm_api_host, args.prompt_prefix, args.gui_printer)
                 bot_printer(bot_response, args.gui_printer)
             # if key == keyboard.Key.shift and any(x in current for x in {keyboard.KeyCode(char='X')}):
             if any(keypressed in current for keypressed in {keyboard.Key.f12}):
-                logging.info("Shift + F12 pressed. Stopping the listener.")
+                logging.info('Shift + F12 pressed. Stopping the listener.')
                 listener.stop()
 
     def on_release(key):
@@ -202,7 +180,6 @@ def main():
     log_setup()
     with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
         listener.join()
-
 
 if __name__ == "__main__":
     main()
