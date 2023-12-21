@@ -1,0 +1,6 @@
+**/__pycache__/**
+**/*.log
+
+aihub/aihub_pb2.py
+aihub/aihub_pb2.pyi
+aihub/aihub_pb2_grpc.py
