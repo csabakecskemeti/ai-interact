@@ -8,10 +8,22 @@ import aihub_pb2
 import aihub_pb2_grpc
 
 from google.protobuf import empty_pb2
-from aihub import send_request
+from openai import OpenAI
 
+def call_llm(client, user, system="You are a helpful assistant. Always tell the answert you're confident it."):
+    print(user)
+    completion = client.chat.completions.create(
+        model="local-model",  # this field is currently unused
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": user}
+        ],
+        temperature=0.7,
+    )
 
-def main(api):
+    return completion.choices[0].message.content
+
+def main(api_host, prompt_prefix=""):
     parser = argparse.ArgumentParser(description="aiHub keyboard listener arg parse")
     parser.add_argument(
         "-t", "--host", type=str, help="Task manager host.", default="localhost"
@@ -21,6 +33,8 @@ def main(api):
     )
     args = parser.parse_args()
 
+    client = OpenAI(base_url=api_host, api_key="not-needed")
+
     empty = empty_pb2.Empty()
     with grpc.insecure_channel("{}:{}".format(args.host, args.port)) as channel:
         stub = aihub_pb2_grpc.AIHubStub(channel)
@@ -29,7 +43,7 @@ def main(api):
             if task.id > 0:
                 # If this is a valid task, process it.
                 print("Received: ", task)
-                answer = send_request(task.question, api)
+                answer = call_llm(client, user=" ".join([prompt_prefix, task.question]))
                 # task.answer = "This is the answer from LLM"
                 task.answer = answer
                 task.status = aihub_pb2.ANSWER_AVAILABLE
@@ -53,16 +67,16 @@ def load_configuration_from_file(self):
 
 if __name__ == "__main__":
     logging.basicConfig()
-    api = ''
+    api_host = ''
     prompt_prefix = ''
     try:
         with open('config.json', 'r') as file:
             config_data = json.load(file)
 
             # Update StringVar values
-            api = config_data['api']
+            api_host = config_data['api']
             prompt_prefix = config_data['prompt_prefix']
     except FileNotFoundError:
         print("Config file not found. Using default values.")
 
-    main(api)
+    main(api_host, prompt_prefix)
