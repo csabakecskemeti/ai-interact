@@ -3,6 +3,16 @@ from tkinter import scrolledtext
 import subprocess
 import threading
 import json
+import argparse
+import logging
+import time
+
+import grpc
+import aihub_pb2
+import aihub_pb2_grpc
+
+from google.protobuf import empty_pb2
+
 
 class MyApp:
     def __init__(self, root):
@@ -29,12 +39,13 @@ class MyApp:
         self.input_entry = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=40, height=4)
         self.input_entry.grid(row=3, column=0, columnspan=4, padx=10, pady=10, sticky="ew")
 
+        # screen capture help
+        self.header_label = tk.Label(root, text="Screen capture [fn][shift][F1]", font=("Helvetica", 16))
+        self.header_label.grid(row=4, column=0, columnspan=1, sticky="n", pady=10)
+
         # Button to send the message
         self.send_button = tk.Button(root, text="Send", command=self.send_message)
         self.send_button.grid(row=4, column=3, pady=10)
-
-        self.start_stop_button = tk.Button(root, text="Start aiHub lurking...", command=self.toggle_background_app)
-        self.start_stop_button.grid(row=4, column=0, pady=10)
 
         # Button to clear the text area
         self.clear_button = tk.Button(root, text="Clear Text", command=self.clear_text_area)
@@ -81,9 +92,10 @@ class MyApp:
         self.load_configuration_from_file()
 
         # Allow resizing of the window
-        root.geometry("400x300")
+        root.geometry("500x400")
         root.resizable(True, True)
 
+        self.start_background_app()
         # Flag to track whether the background app is currently running
         self.background_app_running = False
 
@@ -92,19 +104,12 @@ class MyApp:
         input_text = self.input_entry.get("1.0", tk.END)
 
         # Append the text to the text area
-        self.text_area.insert(tk.END, f"\nUser: {input_text}")
-
+        # self.text_area.insert(tk.END, f"\nUSER:\n{input_text}")
+        with grpc.insecure_channel("{}:{}".format('localhost', 50051)) as channel:
+            stub = aihub_pb2_grpc.AIHubStub(channel)
+            stub.AddNewTask(aihub_pb2.Task(question=input_text))
         # Clear the input entry
         self.input_entry.delete("1.0", tk.END)
-
-
-    def toggle_background_app(self):
-        if hasattr(self, 'process') and self.process.poll() is None:
-            # Background app is running, stop it
-            self.stop_background_app()
-        else:
-            # Background app is not running, start it
-            self.start_background_app()
 
 
     def load_configuration_from_file(self):
@@ -195,62 +200,48 @@ class MyApp:
             readme_text.pack()
 
 
-    def stop_background_app(self):
-        # Terminate the background app
-        if hasattr(self, 'process') and self.process.poll() is None:
-            self.process.terminate()
-
-        # Enable the start/stop button
-        self.start_stop_button.config(text="Start aiHub lurking...", command=self.start_background_app)
-        # Update the flag
-        self.background_app_running = False
-
-        # Update the status "light" color
-        self.status_light_canvas.itemconfig(self.status_light_circle, fill="red", outline="")
-
     def start_background_app(self):
-        if not self.background_app_running:
+        # Start the background app in a separate thread
+        self.thread = threading.Thread(target=self.run_background_app)
+        self.thread.start()
+        self.background_app_running = True
+        self.status_light_canvas.itemconfig(self.status_light_circle, fill="green", outline="")
 
-            # Start the background app in a separate thread
-            self.thread = threading.Thread(target=self.run_background_app)
-            self.thread.start()
-
-            # Update the command attribute for the button
-            self.start_stop_button.config(text="Stop aiHub", command=self.stop_background_app)
-
-            # Update the flag
-            self.background_app_running = True
-
-            # Update the status "light" color
-            self.status_light_canvas.itemconfig(self.status_light_circle, fill="green", outline="")
 
     def run_background_app(self):
         try:
-            # Replace 'your_background_app.py' with the actual file name of your background app
-            self.process = subprocess.Popen(["python", "-u", "aihub.py", "-gui",
-                                             '-api', self.configuration_settings['api'].get(),
-                                             '-pp', self.configuration_settings['prompt_prefix'].get()],
-                                            stdout=subprocess.PIPE, text=True, bufsize=1)
+            empty = empty_pb2.Empty()
+            with grpc.insecure_channel("{}:{}".format('localhost', 50051)) as channel:
+                stub = aihub_pb2_grpc.AIHubStub(channel)
+                while True:
+                    new_tasks = stub.ShowInUI(empty)
 
-            # Read and display the stdout in real-time
-            for line in iter(self.process.stdout.readline, ""):
-                if len(line) > 0:
-                    self.update_text_area(line)
-                    if "BOT:" in line:
+                    if new_tasks.id > 0:
                         self.status_light_canvas.itemconfig(self.status_light_circle, fill="orange", outline="")
+                        print("New question: ", new_tasks)
+                        self.update_text_area("USER:\n")
+                        self.update_text_area(new_tasks.question)
+                        self.update_text_area("\n")
+
+                        while True:
+                            processed_task = stub.RemoveProcessedQuestion(empty)
+                            if processed_task.id > 0:
+                                self.status_light_canvas.itemconfig(self.status_light_circle, fill="green", outline="")
+                                # If this is a valid task, show it on UI.
+                                print("Received: ", processed_task)
+                                # self.update_text_area("USER:\n")
+                                # self.update_text_area(processed_task.question)
+                                # self.update_text_area("\n")
+                                self.update_text_area("BOT:\n")
+                                self.update_text_area(processed_task.answer)
+                                self.update_text_area("\n")
+                                break
+
                     else:
-                        self.status_light_canvas.itemconfig(self.status_light_circle, fill="green", outline="")
+                        print("No new processed task to show on UI!")
 
-            # Wait for the process to complete and get the return code
-            return_code = self.process.wait()
+                    time.sleep(5)
 
-            # # Enable the start button after the app is done
-            # self.start_button.config(state=tk.NORMAL)
-            #
-            # # Disable the stop button
-            # self.stop_button.config(state=tk.DISABLED)
-
-            # Optionally, you can print the return code
             print("Background App exited with return code:", return_code)
 
         except Exception as e:
@@ -272,16 +263,6 @@ class MyApp:
         # Force the GUI to update in real-time
         self.root.update_idletasks()
 
-
-    def update_spinner_text_area(self, text, line_number=None):
-        # Update the text area in a thread-safe manner
-        if line_number is not None:
-            self.text_area.delete(f"{line_number}.0", f"{line_number + 1}.0")
-        self.text_area.insert(tk.END, text + "\n")
-        self.text_area.yview(tk.END)
-
-        # Force the GUI to update in real-time
-        self.root.update_idletasks()
 
 if __name__ == "__main__":
     root = tk.Tk()

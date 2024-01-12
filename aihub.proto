@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package aihub;
+
+service AIHub {
+  // 0 -> NEW
+  // Assumed only the field `question` is peresnt in the input task.
+  // The returned task has `status` set to `NEW` and `id` is present.
+  rpc AddNewTask (Task) returns (Task) {}
+
+  // NEW -> SHOWN_IN_UI
+  // Assumed `id` and `question` are present, `status` is set to
+  // `SHOWN_IN_UI` in the returned task.
+  rpc ShowInUI(google.protobuf.Empty) returns (Task) {}
+
+  // SHOW_IN_UI -> GENERATING_ANSWER
+  // Assumed `id` and `question` are present, `status` is set to
+  // `GENERATING_ANSWER` in the returned task.
+  rpc StartGeneratingAnswer(google.protobuf.Empty) returns (Task) {}
+
+  // GENERATING_ANSWER -> ANSWER_AVAILABLE
+  // Assumed the `id` and the `answer` is present in the input task.
+  // The returned task has `status` set to `ANSWER_AVAILABLE`.
+  rpc AddAnswer (Task) returns (Task) {}
+
+  // ANSWER_AVAILABLE -> 0
+  // Assumed `status` is set to `ANSWER_AVAILABLE`.
+  rpc RemoveProcessedQuestion(google.protobuf.Empty) returns (Task) {}
+}
+
+enum TaskStatus {
+  NEW = 0;
+  SHOWN_IN_UI = 3;
+  GENERATING_ANSWER = 1;
+  ANSWER_AVAILABLE = 2;
+}
+
+message Task {
+  int64 id = 1;
+  TaskStatus status = 2;
+  string question = 3;
+  string answer = 4;
+}
