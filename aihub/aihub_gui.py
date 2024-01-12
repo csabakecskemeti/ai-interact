@@ -39,6 +39,10 @@ class MyApp:
         self.input_entry = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=40, height=4)
         self.input_entry.grid(row=3, column=0, columnspan=4, padx=10, pady=10, sticky="ew")
 
+        # screen capture help
+        self.header_label = tk.Label(root, text="Screen capture [fn][shift][F1]", font=("Helvetica", 16))
+        self.header_label.grid(row=4, column=0, columnspan=1, sticky="n", pady=10)
+
         # Button to send the message
         self.send_button = tk.Button(root, text="Send", command=self.send_message)
         self.send_button.grid(row=4, column=3, pady=10)
@@ -88,7 +92,7 @@ class MyApp:
         self.load_configuration_from_file()
 
         # Allow resizing of the window
-        root.geometry("400x300")
+        root.geometry("500x400")
         root.resizable(True, True)
 
         self.start_background_app()
