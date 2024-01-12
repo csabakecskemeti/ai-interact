@@ -212,7 +212,8 @@ class MyApp:
             with grpc.insecure_channel("{}:{}".format('localhost', 50051)) as channel:
                 stub = aihub_pb2_grpc.AIHubStub(channel)
                 while True:
-                    new_tasks = stub.ShowInUI()
+                    new_tasks = stub.ShowInUI(empty)
+
                     if new_tasks.id > 0:
                         self.status_light_canvas.itemconfig(self.status_light_circle, fill="orange", outline="")
                         print("New question: ", new_tasks)
@@ -220,19 +221,19 @@ class MyApp:
                         self.update_text_area(new_tasks.question)
                         self.update_text_area("\n")
 
-                    while True:
-                        processed_task = stub.RemoveProcessedQuestion(empty)
-                        if processed_task.id > 0:
-                            self.status_light_canvas.itemconfig(self.status_light_circle, fill="green", outline="")
-                            # If this is a valid task, show it on UI.
-                            print("Received: ", processed_task)
-                            # self.update_text_area("USER:\n")
-                            # self.update_text_area(processed_task.question)
-                            # self.update_text_area("\n")
-                            self.update_text_area("BOT:\n")
-                            self.update_text_area(processed_task.answer)
-                            self.update_text_area("\n")
-                            break
+                        while True:
+                            processed_task = stub.RemoveProcessedQuestion(empty)
+                            if processed_task.id > 0:
+                                self.status_light_canvas.itemconfig(self.status_light_circle, fill="green", outline="")
+                                # If this is a valid task, show it on UI.
+                                print("Received: ", processed_task)
+                                # self.update_text_area("USER:\n")
+                                # self.update_text_area(processed_task.question)
+                                # self.update_text_area("\n")
+                                self.update_text_area("BOT:\n")
+                                self.update_text_area(processed_task.answer)
+                                self.update_text_area("\n")
+                                break
 
                     else:
                         print("No new processed task to show on UI!")
