@@ -105,7 +105,7 @@ class MyApp:
 
         # Append the text to the text area
         # self.text_area.insert(tk.END, f"\nUSER:\n{input_text}")
-        with grpc.insecure_channel("{}:{}".format('localhost', 50051)) as channel:
+        with grpc.insecure_channel("{}:{}".format(args.host, args.port)) as channel:
             stub = aihub_pb2_grpc.AIHubStub(channel)
             stub.AddNewTask(aihub_pb2.Task(question=input_text))
         # Clear the input entry
@@ -211,7 +211,7 @@ class MyApp:
     def run_background_app(self):
         try:
             empty = empty_pb2.Empty()
-            with grpc.insecure_channel("{}:{}".format('localhost', 50051)) as channel:
+            with grpc.insecure_channel("{}:{}".format(args.host, args.port)) as channel:
                 stub = aihub_pb2_grpc.AIHubStub(channel)
                 while True:
                     new_tasks = stub.ShowInUI(empty)
@@ -265,6 +265,15 @@ class MyApp:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="aiHub gui arg parse")
+    parser.add_argument(
+        "-t", "--host", type=str, help="Task manager host.", default="localhost"
+    )
+    parser.add_argument(
+        "-p", "--port", type=int, help="Task manager port.", default=50051
+    )
+    args = parser.parse_args()
+
     root = tk.Tk()
     app = MyApp(root)
     root.mainloop()
