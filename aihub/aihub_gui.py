@@ -104,7 +104,7 @@ class MyApp:
         input_text = self.input_entry.get("1.0", tk.END)
 
         # Append the text to the text area
-        self.text_area.insert(tk.END, f"\nUser: {input_text}")
+        self.text_area.insert(tk.END, f"\nUSER:\n{input_text}")
 
         # Clear the input entry
         self.input_entry.delete("1.0", tk.END)
@@ -212,15 +212,27 @@ class MyApp:
             with grpc.insecure_channel("{}:{}".format('localhost', 50051)) as channel:
                 stub = aihub_pb2_grpc.AIHubStub(channel)
                 while True:
-                    processed_task = stub.RemoveProcessedQuestion(empty)
-                    if processed_task.id > 0:
-                        # If this is a valid task, show it on UI.
-                        print("Received: ", processed_task)
+                    new_tasks = stub.ShowInUI()
+                    if new_tasks.id > 0:
+                        self.status_light_canvas.itemconfig(self.status_light_circle, fill="orange", outline="")
+                        print("New question: ", new_tasks)
                         self.update_text_area("USER:\n")
-                        self.update_text_area(processed_task.question)
+                        self.update_text_area(new_tasks.question)
                         self.update_text_area("\n")
-                        self.update_text_area("BOT:\n")
-                        self.update_text_area(processed_task.answer)
+
+                    while True:
+                        processed_task = stub.RemoveProcessedQuestion(empty)
+                        if processed_task.id > 0:
+                            self.status_light_canvas.itemconfig(self.status_light_circle, fill="green", outline="")
+                            # If this is a valid task, show it on UI.
+                            print("Received: ", processed_task)
+                            # self.update_text_area("USER:\n")
+                            # self.update_text_area(processed_task.question)
+                            # self.update_text_area("\n")
+                            self.update_text_area("BOT:\n")
+                            self.update_text_area(processed_task.answer)
+                            self.update_text_area("\n")
+                            break
 
                     else:
                         print("No new processed task to show on UI!")
@@ -248,16 +260,6 @@ class MyApp:
         # Force the GUI to update in real-time
         self.root.update_idletasks()
 
-
-    def update_spinner_text_area(self, text, line_number=None):
-        # Update the text area in a thread-safe manner
-        if line_number is not None:
-            self.text_area.delete(f"{line_number}.0", f"{line_number + 1}.0")
-        self.text_area.insert(tk.END, text + "\n")
-        self.text_area.yview(tk.END)
-
-        # Force the GUI to update in real-time
-        self.root.update_idletasks()
 
 if __name__ == "__main__":
     root = tk.Tk()
