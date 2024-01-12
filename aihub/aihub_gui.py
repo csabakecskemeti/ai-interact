@@ -234,13 +234,13 @@ class MyApp:
                                 # self.update_text_area("\n")
                                 self.update_text_area("BOT:\n")
                                 self.update_text_area(processed_task.answer)
-                                self.update_text_area("\n")
+                                self.update_text_area("\n\n")
                                 break
 
                     else:
                         print("No new processed task to show on UI!")
 
-                    time.sleep(5)
+                    time.sleep(1)
 
             print("Background App exited with return code:", return_code)
 
