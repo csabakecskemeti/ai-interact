@@ -1,3 +1,4 @@
+import os
 import tkinter as tk
 from tkinter import scrolledtext
 import subprocess
@@ -272,8 +273,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "-p", "--port", type=int, help="Task manager port.", default=50051
     )
+
     args = parser.parse_args()
 
+    def on_closing():
+        # Your cleanup code or actions before closing the GUI
+        print("Performing cleanup before closing the GUI")
+
+        # Terminate the running Python process
+        os._exit(0)
+
     root = tk.Tk()
+    root.protocol("WM_DELETE_WINDOW", on_closing)
     app = MyApp(root)
     root.mainloop()

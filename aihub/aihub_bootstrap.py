@@ -1,19 +1,38 @@
 import argparse
 import logging
+import os
 import signal
 import subprocess
 import sys
 import time
 
+import psutil
+
 
 class SignalHandler:
-  def __init__(self):
-    self.run = True
-    signal.signal(signal.SIGINT, self.exit_gracefully)
-    signal.signal(signal.SIGTERM, self.exit_gracefully)
+    def __init__(self):
+        self.run = True
+        signal.signal(signal.SIGINT, self.exit_gracefully)
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
 
-  def exit_gracefully(self, signum, frame):
-    self.run = False
+
+    def exit_gracefully(self, signum, frame):
+        self.run = False
+
+
+def is_pid_running(processes):
+    for process in processes:
+        try:
+            # Attempt to retrieve the process information for the given PID
+            process = psutil.Process(process.pid)
+            if process.status() != 'running':
+                return False
+            # If successful, the process exists
+            pass
+        except psutil.NoSuchProcess:
+            # If NoSuchProcess exception is raised, the process doesn't exist
+            return False
+    return True
 
 
 def main():
@@ -42,7 +61,7 @@ def main():
     # Handle termination signals gracefully and stop the started background
     # processes.
     signal_handler = SignalHandler()
-    while signal_handler.run:
+    while signal_handler.run and is_pid_running(processes):
         # Wait for signal to exit.
         time.sleep(2)
 
