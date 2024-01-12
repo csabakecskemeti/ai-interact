@@ -104,8 +104,10 @@ class MyApp:
         input_text = self.input_entry.get("1.0", tk.END)
 
         # Append the text to the text area
-        self.text_area.insert(tk.END, f"\nUSER:\n{input_text}")
-
+        # self.text_area.insert(tk.END, f"\nUSER:\n{input_text}")
+        with grpc.insecure_channel("{}:{}".format('localhost', 50051)) as channel:
+            stub = aihub_pb2_grpc.AIHubStub(channel)
+            stub.AddNewTask(aihub_pb2.Task(question=input_text))
         # Clear the input entry
         self.input_entry.delete("1.0", tk.END)
 
