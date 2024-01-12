@@ -30,11 +30,27 @@ class TaskManager(aihub_pb2_grpc.AIHubServicer):
         print("AddNewTask", self._tasks, request)
         return request
 
-    def StartGeneratingAnswer(self, request, context):
+    def ShowInUI(self, request, context):
         new_tasks = [
             task_id
             for task_id, task in self._tasks.items()
             if task.status == aihub_pb2.NEW
+        ]
+
+        # TODO: Handle this properly.
+        if not new_tasks:
+            return aihub_pb2.Task()
+
+        new_task = self._tasks[new_tasks[0]]
+        new_task.status = aihub_pb2.SHOWN_IN_UI
+        print("ShowInUI", self._tasks, new_task)
+        return new_task
+
+    def StartGeneratingAnswer(self, request, context):
+        new_tasks = [
+            task_id
+            for task_id, task in self._tasks.items()
+            if task.status == aihub_pb2.SHOWN_IN_UI
         ]
 
         # TODO: Handle this properly.
