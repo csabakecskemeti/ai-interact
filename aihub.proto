@@ -10,7 +10,12 @@ service AIHub {
   // The returned task has `status` set to `NEW` and `id` is present.
   rpc AddNewTask (Task) returns (Task) {}
 
-  // NEW -> GENERATING_ANSWER
+  // NEW -> SHOWN_IN_UI
+  // Assumed `id` and `question` are present, `status` is set to
+  // `SHOWN_IN_UI` in the returned task.
+  rpc ShowInUI(google.protobuf.Empty) returns (Task) {}
+
+  // SHOW_IN_UI -> GENERATING_ANSWER
   // Assumed `id` and `question` are present, `status` is set to
   // `GENERATING_ANSWER` in the returned task.
   rpc StartGeneratingAnswer(google.protobuf.Empty) returns (Task) {}
@@ -27,6 +32,7 @@ service AIHub {
 
 enum TaskStatus {
   NEW = 0;
+  SHOWN_IN_UI = 3;
   GENERATING_ANSWER = 1;
   ANSWER_AVAILABLE = 2;
 }
