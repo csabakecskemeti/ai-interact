@@ -29,6 +29,12 @@ $ pyenv activate aihub
 $ pip install -r requirements.txt
 ```
 
+  * Generate the Protocol Buffer Python stubs:
+
+```
+python -m grpc_tools.protoc -I. --python_out=./aihub --pyi_out=./aihub --grpc_python_out=./aihub aihub.proto
+```
+
   * Configure LLVM service access:
 ```
 $ vi aihub/config.json
