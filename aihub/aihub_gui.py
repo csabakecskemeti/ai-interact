@@ -41,7 +41,7 @@ class MyApp:
         self.input_entry.grid(row=3, column=0, columnspan=4, padx=10, pady=10, sticky="ew")
 
         # screen capture help
-        self.header_label = tk.Label(root, text="Screen capture [fn][shift][F1]", font=("Helvetica", 16))
+        self.header_label = tk.Label(root, text="Screen capture [shift][F1]", font=("Helvetica", 16))
         self.header_label.grid(row=4, column=0, columnspan=1, sticky="n", pady=10)
 
         # Button to send the message
