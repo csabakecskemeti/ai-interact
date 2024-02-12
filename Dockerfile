@@ -26,7 +26,7 @@ COPY requirements.txt .
 RUN pip3 install pillow pytesseract pyautogui pynput keyboard requests grpcio protobuf openai
 
 # Redirect display.
-ENV DISPLAY :0
+ENV DISPLAY host.docker.internal:0
 
 # Start bootsrapping the application.
 ENTRYPOINT cd aihub && python3 -m aihub_bootstrap
