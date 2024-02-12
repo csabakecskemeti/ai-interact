@@ -4,15 +4,8 @@ built by devquasar.com
 Configuration 
 - API: set your LLM API.
 - Shortcut: currently not used
-- Prompt prefix: the prefix you wanted to preced the captured information (like: 'fix this', 'summarize this')
+- Prompt prefix: the prefix you wanted to precede the captured information (like: 'fix this', 'summarize this')
 Note: to apply new configuration you have to stop and restart the aiHub within the aiHub Manager
-
-Use the tool
-  Start/Stop
-    Start aiHub with the [Start aiHub lurking...] button
-        Status "led" turn green
-    Stop aiHub with the [Stop aiHub] button
-        Status "led" turn red
 
   Capture
     Navigate to the desired screen area you're looking for help with
@@ -26,3 +19,6 @@ Use the tool
 
 What LLM to use?
 The tool is agnostic of the LLM. We suggest to leverage local LLM inference with LM Studio <lmstudio.ai>. 
+
+Project readme:
+https://github.com/csabakecskemeti/ai-interact/blob/main/README.md

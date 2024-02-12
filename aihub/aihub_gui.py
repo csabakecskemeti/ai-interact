@@ -186,19 +186,19 @@ class MyApp:
         about_window = tk.Toplevel(self.root)
         about_window.title("About")
 
-        # Read content from the readme.md file
+        # Read content from the help.md file
         try:
-            with open('readme.md', 'r', encoding='utf-8') as file:
-                readme_content = file.read()
+            with open('help.md', 'r', encoding='utf-8') as file:
+                help_content = file.read()
 
             # Create a scrolled text widget to display the content
-            readme_text = scrolledtext.ScrolledText(about_window, wrap=tk.WORD, width=60, height=20)
-            readme_text.insert(tk.END, readme_content)
-            readme_text.config(state=tk.DISABLED)
-            readme_text.pack(expand=True, fill='both')
+            help_text = scrolledtext.ScrolledText(about_window, wrap=tk.WORD, width=60, height=20)
+            help_text.insert(tk.END, help_content)
+            help_text.config(state=tk.DISABLED)
+            help_text.pack(expand=True, fill='both')
         except FileNotFoundError:
-            readme_text = tk.Label(about_window, text="readme.md not found.")
-            readme_text.pack()
+            help_text = tk.Label(about_window, text="help.md not found.")
+            help_text.pack()
 
 
     def start_background_app(self):
