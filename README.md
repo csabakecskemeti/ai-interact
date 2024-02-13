@@ -81,3 +81,12 @@ Usage
 ### Config via GUI
 
 ![aihub_config](https://github.com/csabakecskemeti/ai-interact/assets/12419949/887a290a-e628-4187-94f3-b7e98110f1e4)
+
+Roadmap
+=====
+- Chat context handling
+- Support streaming API
+- Support API key
+- Talk to LLM
+- Bot answer to speech
+- Setup multiple Agents 
