@@ -5,11 +5,11 @@ models that are app agnostic, by sharing a screen portion with the model where t
 
 How it works
 ===================
-A small Python application with a minimal GUI runs in the background. The application is API-integrated with an LLM of your choice (for our tests we've used [LMStudio](https://lmstudio.ai/) for local inference, but any other tool would work that implements the OpenAI API)
+A small Python application with a minimal GUI runs in the background. The application is API-integrated with an LLM of your choice (in our tests we've used [LMStudio](https://lmstudio.ai/) for local inference, but any other tool would work that implements the OpenAI API)
 and running a keyboard listener.
 With the [SHIFT][F1] keyboard shortcut the user initiates the capture mode. By defining an imaginary rectangle with 2 mouse clicks (define 2 diagonal corners of the rectangle) the code captures an image
 from anywhere on the screen. Then these images are processed by a locally running text extraction model: Tesseract, and the result text will be sent to the LLM with the preconfigured prefix.
-We've found that LLMs can handle the not perfect text extraction of Tesseract.  
+We've found that LLMs can handle the not-perfect text extraction of Tesseract.  
 
 Examples
 ===================
